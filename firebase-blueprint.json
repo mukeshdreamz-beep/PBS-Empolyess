@@ -1,0 +1,603 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user's linked workspace and profile preferences",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "Verified Google account email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "activeWorkspaceId": {
+          "type": "string",
+          "description": "Current workspace ID the user is synced with"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp written via FieldValue.serverTimestamp()"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp written via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "activeWorkspaceId",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Company attendance workspace shared across Admin and Employee phones",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of workspace creator"
+        },
+        "workspaceName": {
+          "type": "string",
+          "description": "Company or workspace name"
+        },
+        "adminUids": {
+          "type": "array",
+          "description": "Bounded list of Firebase UIDs authorized as workspace admins"
+        },
+        "authorizedAdminEmails": {
+          "type": "array",
+          "description": "Bounded list of Google emails authorized to claim Admin role"
+        },
+        "policyDefaultInMinutes": {
+          "type": "integer"
+        },
+        "policyDefaultOutMinutes": {
+          "type": "integer"
+        },
+        "policyFullDayThresholdMinutes": {
+          "type": "integer"
+        },
+        "policyOvertimeStartMinutes": {
+          "type": "integer"
+        },
+        "policyBreakDeductionMinutes": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "workspaceName",
+        "adminUids",
+        "authorizedAdminEmails",
+        "policyDefaultInMinutes",
+        "policyDefaultOutMinutes",
+        "policyFullDayThresholdMinutes",
+        "policyOvertimeStartMinutes",
+        "policyBreakDeductionMinutes",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "WorkspaceMember": {
+      "title": "WorkspaceMember",
+      "description": "Authenticated user's role and employee binding within a workspace",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["ADMIN", "EMPLOYEE"]
+        },
+        "employeeLoginId": {
+          "type": "string"
+        },
+        "employeeLocalId": {
+          "type": "integer"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "role",
+        "displayName",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "AdminAccount": {
+      "title": "AdminAccount",
+      "description": "PBS Admin mobile credentials stored inside the workspace",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string"
+        },
+        "adminUids": {
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "mobile": {
+          "type": "string"
+        },
+        "passwordHash": {
+          "type": "string"
+        },
+        "createdAtMs": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "adminUids",
+        "name",
+        "mobile",
+        "passwordHash",
+        "createdAtMs",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "EmployeeAuth": {
+      "title": "EmployeeAuth",
+      "description": "Non-PII login credential record used by employee devices to verify Login ID and password",
+      "type": "object",
+      "properties": {
+        "loginId": {
+          "type": "string"
+        },
+        "passwordHash": {
+          "type": "string"
+        },
+        "employeeRemoteId": {
+          "type": "string"
+        },
+        "employeeLocalId": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "site": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "loginId",
+        "passwordHash",
+        "employeeRemoteId",
+        "employeeLocalId",
+        "name",
+        "site",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "EmployeeRecord": {
+      "title": "EmployeeRecord",
+      "description": "Employee master directory record with wage rates and device binding",
+      "type": "object",
+      "properties": {
+        "localId": {
+          "type": "integer"
+        },
+        "adminUids": {
+          "type": "array"
+        },
+        "claimedByUid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "employeeCode": {
+          "type": "string"
+        },
+        "site": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "dailyWage": {
+          "type": "number"
+        },
+        "otHourlyRate": {
+          "type": "number"
+        },
+        "loginId": {
+          "type": "string"
+        },
+        "passwordHash": {
+          "type": "string"
+        },
+        "passwordUpdatedAt": {
+          "type": "integer"
+        },
+        "createdAtMs": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "localId",
+        "adminUids",
+        "claimedByUid",
+        "name",
+        "site",
+        "loginId",
+        "passwordHash",
+        "createdAtMs",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daily attendance entry with selfie photos and GPS locations",
+      "type": "object",
+      "properties": {
+        "adminUids": {
+          "type": "array"
+        },
+        "employeeUid": {
+          "type": "string"
+        },
+        "employeeId": {
+          "type": "integer"
+        },
+        "employeeRemoteId": {
+          "type": "string"
+        },
+        "employeeLoginId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "inMinutes": {
+          "type": "integer"
+        },
+        "outMinutes": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PRESENT", "ABSENT", "LEAVE"]
+        },
+        "note": {
+          "type": "string"
+        },
+        "hasCheckedIn": {
+          "type": "boolean"
+        },
+        "hasCheckedOut": {
+          "type": "boolean"
+        },
+        "markedByRole": {
+          "type": "string",
+          "enum": ["ADMIN", "EMPLOYEE"]
+        },
+        "checkInTimestamp": {
+          "type": "integer"
+        },
+        "checkOutTimestamp": {
+          "type": "integer"
+        },
+        "checkInPhotoBase64": {
+          "type": "string"
+        },
+        "checkInLat": {
+          "type": "number"
+        },
+        "checkInLng": {
+          "type": "number"
+        },
+        "checkInAddress": {
+          "type": "string"
+        },
+        "checkOutPhotoBase64": {
+          "type": "string"
+        },
+        "checkOutLat": {
+          "type": "number"
+        },
+        "checkOutLng": {
+          "type": "number"
+        },
+        "checkOutAddress": {
+          "type": "string"
+        },
+        "updatedAtMs": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "adminUids",
+        "employeeUid",
+        "employeeId",
+        "employeeRemoteId",
+        "employeeLoginId",
+        "date",
+        "inMinutes",
+        "outMinutes",
+        "status",
+        "hasCheckedIn",
+        "hasCheckedOut",
+        "markedByRole",
+        "checkInTimestamp",
+        "checkOutTimestamp",
+        "updatedAtMs",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "ExpenseRecord": {
+      "title": "ExpenseRecord",
+      "description": "Employee or site expense claim and Admin approval/claim settlement state",
+      "type": "object",
+      "properties": {
+        "adminUids": {
+          "type": "array"
+        },
+        "employeeUid": {
+          "type": "string"
+        },
+        "localId": {
+          "type": "integer"
+        },
+        "employeeId": {
+          "type": "integer"
+        },
+        "employeeLoginId": {
+          "type": "string"
+        },
+        "employeeName": {
+          "type": "string"
+        },
+        "site": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "APPROVED", "REJECTED"]
+        },
+        "isClaimed": {
+          "type": "boolean"
+        },
+        "approvedAt": {
+          "type": "integer"
+        },
+        "claimedAt": {
+          "type": "integer"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdAtMs": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "adminUids",
+        "employeeUid",
+        "localId",
+        "employeeName",
+        "site",
+        "title",
+        "category",
+        "amount",
+        "date",
+        "status",
+        "isClaimed",
+        "approvedAt",
+        "claimedAt",
+        "createdAtMs",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    },
+    "ApprovalRequest": {
+      "title": "ApprovalRequest",
+      "description": "Employee leave, overtime, or attendance correction request reviewed by Admin",
+      "type": "object",
+      "properties": {
+        "adminUids": {
+          "type": "array"
+        },
+        "employeeUid": {
+          "type": "string"
+        },
+        "localId": {
+          "type": "integer"
+        },
+        "employeeId": {
+          "type": "integer"
+        },
+        "employeeLoginId": {
+          "type": "string"
+        },
+        "employeeName": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["LEAVE", "ATTENDANCE_CORRECTION", "OVERTIME"]
+        },
+        "date": {
+          "type": "string"
+        },
+        "inMinutes": {
+          "type": "integer"
+        },
+        "outMinutes": {
+          "type": "integer"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "APPROVED", "REJECTED"]
+        },
+        "createdAtMs": {
+          "type": "integer"
+        },
+        "serverCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serverUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "adminUids",
+        "employeeUid",
+        "localId",
+        "employeeId",
+        "employeeLoginId",
+        "employeeName",
+        "type",
+        "date",
+        "inMinutes",
+        "outMinutes",
+        "reason",
+        "status",
+        "createdAtMs",
+        "serverCreatedAt",
+        "serverUpdatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user workspace preference and Google profile"
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Workspace configuration, shift rules, and admin authorization"
+    },
+    "/workspaces/{workspaceId}/members/{memberUid}": {
+      "schema": { "$ref": "#/entities/WorkspaceMember" },
+      "description": "Workspace membership and active role binding per authenticated Google user"
+    },
+    "/workspaces/{workspaceId}/admins/{adminDocId}": {
+      "schema": { "$ref": "#/entities/AdminAccount" },
+      "description": "PBS Admin login accounts scoped to workspace"
+    },
+    "/workspaces/{workspaceId}/employee_auth/{loginId}": {
+      "schema": { "$ref": "#/entities/EmployeeAuth" },
+      "description": "Non-PII login credentials for employee authentication across devices"
+    },
+    "/workspaces/{workspaceId}/employees/{empDocId}": {
+      "schema": { "$ref": "#/entities/EmployeeRecord" },
+      "description": "Employee master directory and wage rates"
+    },
+    "/workspaces/{workspaceId}/attendance/{entryDocId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Daily attendance records with IN/OUT selfie photos and GPS coordinates"
+    },
+    "/workspaces/{workspaceId}/expenses/{expenseDocId}": {
+      "schema": { "$ref": "#/entities/ExpenseRecord" },
+      "description": "Expense claims and approval/claimed tracking"
+    },
+    "/workspaces/{workspaceId}/approvals/{approvalDocId}": {
+      "schema": { "$ref": "#/entities/ApprovalRequest" },
+      "description": "Leave and timing correction requests"
+    }
+  }
+}

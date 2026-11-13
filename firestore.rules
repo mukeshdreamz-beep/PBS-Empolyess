@@ -1,0 +1,588 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL HARDENED HELPERS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasValidServerTimestamps(data) {
+      return data.serverCreatedAt is timestamp &&
+             data.serverCreatedAt <= request.time &&
+             data.serverUpdatedAt is timestamp &&
+             data.serverUpdatedAt <= request.time;
+    }
+
+    function isValidBoundedUidList(listVal, maxLen) {
+      return listVal is list &&
+             listVal.size() >= 1 &&
+             listVal.size() <= maxLen &&
+             listVal[0] is string &&
+             listVal[0].size() <= 128;
+    }
+
+    function isValidBoundedEmailList(listVal, maxLen) {
+      return listVal is list &&
+             listVal.size() <= maxLen &&
+             (listVal.size() == 0 || (listVal[0] is string && listVal[0].size() <= 200));
+    }
+
+    function workspaceDocPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId);
+    }
+
+    function memberDocPath(workspaceId, uid) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(uid);
+    }
+
+    function isWorkspaceMember(workspaceId) {
+      return isSignedIn() && exists(memberDocPath(workspaceId, request.auth.uid));
+    }
+
+    function isWorkspaceAdmin(workspaceId) {
+      return isSignedIn() && (
+        (exists(workspaceDocPath(workspaceId)) &&
+          get(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid) ||
+        (exists(memberDocPath(workspaceId, request.auth.uid)) &&
+          get(memberDocPath(workspaceId, request.auth.uid)).data.role == 'ADMIN')
+      );
+    }
+
+    function canClaimAdminRole(workspaceId) {
+      return exists(workspaceDocPath(workspaceId)) && (
+        get(workspaceDocPath(workspaceId)).data.ownerId == request.auth.uid ||
+        request.auth.uid in get(workspaceDocPath(workspaceId)).data.adminUids ||
+        (request.auth.token.email_verified == true &&
+          request.auth.token.email in get(workspaceDocPath(workspaceId)).data.authorizedAdminEmails)
+      );
+    }
+
+    function memberLoginId(workspaceId) {
+      return exists(memberDocPath(workspaceId, request.auth.uid))
+        ? get(memberDocPath(workspaceId, request.auth.uid)).data.employeeLoginId
+        : '';
+    }
+
+    function isListedAdminEmail(workspaceData) {
+      return request.auth.token.email_verified == true &&
+             request.auth.token.email in workspaceData.authorizedAdminEmails;
+    }
+
+    // --- ENTITY VALIDATION HELPERS ---
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.activeWorkspaceId is string && isValidId(data.activeWorkspaceId) &&
+             (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 200)) &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidWorkspace(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+             data.workspaceName is string && data.workspaceName.size() >= 1 && data.workspaceName.size() <= 100 &&
+             isValidBoundedUidList(data.adminUids, 10) &&
+             isValidBoundedEmailList(data.authorizedAdminEmails, 20) &&
+             data.policyDefaultInMinutes is int && data.policyDefaultInMinutes >= 0 && data.policyDefaultInMinutes < 1440 &&
+             data.policyDefaultOutMinutes is int && data.policyDefaultOutMinutes >= 0 && data.policyDefaultOutMinutes < 1440 &&
+             data.policyFullDayThresholdMinutes is int && data.policyFullDayThresholdMinutes >= 60 && data.policyFullDayThresholdMinutes <= 960 &&
+             data.policyOvertimeStartMinutes is int && data.policyOvertimeStartMinutes >= 0 && data.policyOvertimeStartMinutes < 1440 &&
+             data.policyBreakDeductionMinutes is int && data.policyBreakDeductionMinutes >= 0 && data.policyBreakDeductionMinutes <= 180 &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidWorkspaceMember(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             (data.role == 'ADMIN' || data.role == 'EMPLOYEE') &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             (!('employeeLoginId' in data) || data.employeeLoginId == null || (data.employeeLoginId is string && data.employeeLoginId.size() <= 64)) &&
+             (!('employeeLocalId' in data) || data.employeeLocalId == null || (data.employeeLocalId is int && data.employeeLocalId >= 0)) &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidAdminAccount(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+             isValidBoundedUidList(data.adminUids, 10) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.mobile is string && data.mobile.size() >= 10 && data.mobile.size() <= 15 &&
+             data.passwordHash is string && data.passwordHash.size() >= 32 && data.passwordHash.size() <= 128 &&
+             data.createdAtMs is int && data.createdAtMs >= 0 &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidEmployeeAuth(data) {
+      return data.loginId is string && data.loginId.size() >= 1 && data.loginId.size() <= 64 &&
+             data.passwordHash is string && data.passwordHash.size() >= 32 && data.passwordHash.size() <= 128 &&
+             data.employeeRemoteId is string && data.employeeRemoteId.size() >= 1 && data.employeeRemoteId.size() <= 128 &&
+             data.employeeLocalId is int && data.employeeLocalId >= 1 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.site is string && data.site.size() >= 1 && data.site.size() <= 100 &&
+             (!('role' in data) || data.role == null || (data.role is string && data.role.size() <= 100)) &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidEmployeeRecord(data) {
+      return data.localId is int && data.localId >= 1 &&
+             isValidBoundedUidList(data.adminUids, 10) &&
+             data.claimedByUid is string && data.claimedByUid.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             (!('employeeCode' in data) || data.employeeCode == null || (data.employeeCode is string && data.employeeCode.size() <= 64)) &&
+             data.site is string && data.site.size() >= 1 && data.site.size() <= 100 &&
+             (!('role' in data) || data.role == null || (data.role is string && data.role.size() <= 100)) &&
+             (!('phone' in data) || data.phone == null || (data.phone is string && data.phone.size() <= 30)) &&
+             (!('dailyWage' in data) || data.dailyWage == null || (data.dailyWage is number && data.dailyWage >= 0)) &&
+             (!('otHourlyRate' in data) || data.otHourlyRate == null || (data.otHourlyRate is number && data.otHourlyRate >= 0)) &&
+             data.loginId is string && data.loginId.size() >= 1 && data.loginId.size() <= 64 &&
+             data.passwordHash is string && data.passwordHash.size() >= 32 && data.passwordHash.size() <= 128 &&
+             (!('passwordUpdatedAt' in data) || data.passwordUpdatedAt == null || (data.passwordUpdatedAt is int && data.passwordUpdatedAt >= 0)) &&
+             data.createdAtMs is int && data.createdAtMs >= 0 &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidOptionalPhoto(data, key) {
+      return !(key in data) || data[key] == null || (data[key] is string && data[key].size() <= 200000);
+    }
+
+    function isValidOptionalCoord(data, key, minVal, maxVal) {
+      return !(key in data) || data[key] == null || (data[key] is number && data[key] >= minVal && data[key] <= maxVal);
+    }
+
+    function isValidAttendanceRecord(data) {
+      return isValidBoundedUidList(data.adminUids, 10) &&
+             data.employeeUid is string && data.employeeUid.size() <= 128 &&
+             data.employeeId is int && data.employeeId >= 1 &&
+             data.employeeRemoteId is string && data.employeeRemoteId.size() >= 1 && data.employeeRemoteId.size() <= 128 &&
+             data.employeeLoginId is string && data.employeeLoginId.size() <= 64 &&
+             data.date is string && data.date.size() == 10 &&
+             data.inMinutes is int && data.inMinutes >= 0 && data.inMinutes < 1440 &&
+             data.outMinutes is int && data.outMinutes >= 0 && data.outMinutes < 1440 &&
+             (data.status == 'PRESENT' || data.status == 'ABSENT' || data.status == 'LEAVE') &&
+             (!('note' in data) || data.note == null || (data.note is string && data.note.size() <= 500)) &&
+             data.hasCheckedIn is bool &&
+             data.hasCheckedOut is bool &&
+             (data.markedByRole == 'ADMIN' || data.markedByRole == 'EMPLOYEE') &&
+             data.checkInTimestamp is int && data.checkInTimestamp >= 0 &&
+             data.checkOutTimestamp is int && data.checkOutTimestamp >= 0 &&
+             isValidOptionalPhoto(data, 'checkInPhotoBase64') &&
+             isValidOptionalCoord(data, 'checkInLat', -90.0, 90.0) &&
+             isValidOptionalCoord(data, 'checkInLng', -180.0, 180.0) &&
+             (!('checkInAddress' in data) || data.checkInAddress == null || (data.checkInAddress is string && data.checkInAddress.size() <= 300)) &&
+             isValidOptionalPhoto(data, 'checkOutPhotoBase64') &&
+             isValidOptionalCoord(data, 'checkOutLat', -90.0, 90.0) &&
+             isValidOptionalCoord(data, 'checkOutLng', -180.0, 180.0) &&
+             (!('checkOutAddress' in data) || data.checkOutAddress == null || (data.checkOutAddress is string && data.checkOutAddress.size() <= 300)) &&
+             data.updatedAtMs is int && data.updatedAtMs >= 0 &&
+             hasValidServerTimestamps(data);
+    }
+
+    function hasSelfieAndLocationIn(data) {
+      return ('checkInPhotoBase64' in data) && data.checkInPhotoBase64 is string && data.checkInPhotoBase64.size() >= 20 &&
+             ('checkInLat' in data) && data.checkInLat is number &&
+             ('checkInLng' in data) && data.checkInLng is number;
+    }
+
+    function hasSelfieAndLocationOut(data) {
+      return ('checkOutPhotoBase64' in data) && data.checkOutPhotoBase64 is string && data.checkOutPhotoBase64.size() >= 20 &&
+             ('checkOutLat' in data) && data.checkOutLat is number &&
+             ('checkOutLng' in data) && data.checkOutLng is number;
+    }
+
+    function isValidExpenseRecord(data) {
+      return isValidBoundedUidList(data.adminUids, 10) &&
+             data.employeeUid is string && data.employeeUid.size() <= 128 &&
+             data.localId is int && data.localId >= 1 &&
+             (!('employeeId' in data) || data.employeeId == null || (data.employeeId is int && data.employeeId >= 0)) &&
+             (!('employeeLoginId' in data) || data.employeeLoginId == null || (data.employeeLoginId is string && data.employeeLoginId.size() <= 64)) &&
+             data.employeeName is string && data.employeeName.size() <= 100 &&
+             data.site is string && data.site.size() >= 1 && data.site.size() <= 100 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 64 &&
+             data.amount is number && data.amount > 0 &&
+             data.date is string && data.date.size() == 10 &&
+             (data.status == 'PENDING' || data.status == 'APPROVED' || data.status == 'REJECTED') &&
+             data.isClaimed is bool &&
+             data.approvedAt is int && data.approvedAt >= 0 &&
+             data.claimedAt is int && data.claimedAt >= 0 &&
+             (!('note' in data) || data.note == null || (data.note is string && data.note.size() <= 500)) &&
+             data.createdAtMs is int && data.createdAtMs >= 0 &&
+             hasValidServerTimestamps(data);
+    }
+
+    function isValidApprovalRequest(data) {
+      return isValidBoundedUidList(data.adminUids, 10) &&
+             data.employeeUid is string && data.employeeUid.size() <= 128 &&
+             data.localId is int && data.localId >= 1 &&
+             data.employeeId is int && data.employeeId >= 1 &&
+             data.employeeLoginId is string && data.employeeLoginId.size() <= 64 &&
+             data.employeeName is string && data.employeeName.size() >= 1 && data.employeeName.size() <= 100 &&
+             (data.type == 'LEAVE' || data.type == 'ATTENDANCE_CORRECTION' || data.type == 'OVERTIME') &&
+             data.date is string && data.date.size() == 10 &&
+             data.inMinutes is int && data.inMinutes >= 0 && data.inMinutes < 1440 &&
+             data.outMinutes is int && data.outMinutes >= 0 && data.outMinutes < 1440 &&
+             data.reason is string && data.reason.size() >= 1 && data.reason.size() <= 500 &&
+             (data.status == 'PENDING' || data.status == 'APPROVED' || data.status == 'REJECTED') &&
+             data.createdAtMs is int && data.createdAtMs >= 0 &&
+             hasValidServerTimestamps(data);
+    }
+
+    // --- COLLECTIONS ---
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'activeWorkspaceId', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'email', 'displayName', 'activeWorkspaceId', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                       isValidUserProfile(incoming());
+      allow update: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().serverCreatedAt == existing().serverCreatedAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'activeWorkspaceId', 'serverUpdatedAt']);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /workspaces/{workspaceId} {
+      allow get: if isSignedIn() && isValidId(workspaceId) && (
+        existing().ownerId == request.auth.uid ||
+        isWorkspaceMember(workspaceId) ||
+        isListedAdminEmail(existing())
+      );
+      allow list: if isSignedIn() && (
+        existing().ownerId == request.auth.uid ||
+        request.auth.uid in existing().adminUids
+      );
+      allow create: if isSignedIn() &&
+                       isValidId(workspaceId) &&
+                       incoming().ownerId == request.auth.uid &&
+                       request.auth.uid in incoming().adminUids &&
+                       incoming().keys().hasAll([
+                         'ownerId', 'workspaceName', 'adminUids', 'authorizedAdminEmails',
+                         'policyDefaultInMinutes', 'policyDefaultOutMinutes', 'policyFullDayThresholdMinutes',
+                         'policyOvertimeStartMinutes', 'policyBreakDeductionMinutes',
+                         'serverCreatedAt', 'serverUpdatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'ownerId', 'workspaceName', 'adminUids', 'authorizedAdminEmails',
+                         'policyDefaultInMinutes', 'policyDefaultOutMinutes', 'policyFullDayThresholdMinutes',
+                         'policyOvertimeStartMinutes', 'policyBreakDeductionMinutes',
+                         'serverCreatedAt', 'serverUpdatedAt'
+                       ]) &&
+                       isValidWorkspace(incoming());
+      allow update: if isSignedIn() &&
+                       isValidId(workspaceId) &&
+                       isValidWorkspace(incoming()) &&
+                       isWorkspaceAdmin(workspaceId) &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().serverCreatedAt == existing().serverCreatedAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'workspaceName', 'adminUids', 'authorizedAdminEmails',
+                         'policyDefaultInMinutes', 'policyDefaultOutMinutes', 'policyFullDayThresholdMinutes',
+                         'policyOvertimeStartMinutes', 'policyBreakDeductionMinutes',
+                         'serverUpdatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(workspaceId) && existing().ownerId == request.auth.uid;
+
+      // Workspace Members
+      match /members/{memberUid} {
+        allow get: if isSignedIn() && isValidId(memberUid) && (
+          request.auth.uid == memberUid || isWorkspaceAdmin(workspaceId)
+        );
+        allow list: if isSignedIn() && existing().userId == request.auth.uid;
+        allow create: if isSignedIn() &&
+                         isValidId(workspaceId) &&
+                         isValidId(memberUid) &&
+                         request.auth.uid == memberUid &&
+                         incoming().userId == request.auth.uid &&
+                         exists(workspaceDocPath(workspaceId)) &&
+                         incoming().keys().hasAll(['userId', 'role', 'displayName', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'role', 'employeeLoginId', 'employeeLocalId', 'displayName', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         isValidWorkspaceMember(incoming()) &&
+                         (incoming().role == 'EMPLOYEE' || (incoming().role == 'ADMIN' && canClaimAdminRole(workspaceId)));
+        allow update: if isSignedIn() &&
+                         isValidId(workspaceId) &&
+                         isValidId(memberUid) &&
+                         isValidWorkspaceMember(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         (
+                           isWorkspaceAdmin(workspaceId) ||
+                           (request.auth.uid == memberUid &&
+                             (incoming().role == existing().role || (incoming().role == 'ADMIN' && canClaimAdminRole(workspaceId))) &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['role', 'employeeLoginId', 'employeeLocalId', 'displayName', 'serverUpdatedAt']))
+                         );
+        allow delete: if isSignedIn() && isValidId(memberUid) && (
+          request.auth.uid == memberUid || isWorkspaceAdmin(workspaceId)
+        );
+      }
+
+      // Admin Accounts (workspace admins only)
+      match /admins/{adminDocId} {
+        allow get: if isSignedIn() && isValidId(adminDocId) && isWorkspaceAdmin(workspaceId);
+        allow list: if isSignedIn() && (
+          existing().ownerId == request.auth.uid ||
+          request.auth.uid in existing().adminUids
+        );
+        allow create: if isSignedIn() &&
+                         isValidId(adminDocId) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().keys().hasAll(['ownerId', 'adminUids', 'name', 'mobile', 'passwordHash', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         incoming().keys().hasOnly(['ownerId', 'adminUids', 'name', 'mobile', 'passwordHash', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         isValidAdminAccount(incoming());
+        allow update: if isSignedIn() &&
+                         isValidId(adminDocId) &&
+                         isValidAdminAccount(incoming()) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().ownerId == existing().ownerId &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['adminUids', 'name', 'mobile', 'passwordHash', 'serverUpdatedAt']);
+        allow delete: if isSignedIn() && isValidId(adminDocId) && isWorkspaceAdmin(workspaceId);
+      }
+
+      // Non-PII Employee Auth Lookup (allows employee device to verify Login ID + Password)
+      match /employee_auth/{loginId} {
+        allow get: if isSignedIn() && isValidId(loginId) && isWorkspaceMember(workspaceId);
+        allow list: if false;
+        allow create: if isSignedIn() &&
+                         isValidId(loginId) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().keys().hasAll(['loginId', 'passwordHash', 'employeeRemoteId', 'employeeLocalId', 'name', 'site', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         incoming().keys().hasOnly(['loginId', 'passwordHash', 'employeeRemoteId', 'employeeLocalId', 'name', 'site', 'role', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         isValidEmployeeAuth(incoming());
+        allow update: if isSignedIn() &&
+                         isValidId(loginId) &&
+                         isValidEmployeeAuth(incoming()) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['passwordHash', 'employeeRemoteId', 'employeeLocalId', 'name', 'site', 'role', 'serverUpdatedAt']);
+        allow delete: if isSignedIn() && isValidId(loginId) && isWorkspaceAdmin(workspaceId);
+      }
+
+      // Employee Master Directory
+      match /employees/{empDocId} {
+        allow get: if isSignedIn() && isValidId(empDocId) && (
+          isWorkspaceAdmin(workspaceId) ||
+          (isWorkspaceMember(workspaceId) &&
+            (existing().claimedByUid == request.auth.uid || existing().loginId == memberLoginId(workspaceId)))
+        );
+        allow list: if isSignedIn() && (
+          request.auth.uid in existing().adminUids ||
+          existing().claimedByUid == request.auth.uid
+        );
+        allow create: if isSignedIn() &&
+                         isValidId(empDocId) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().keys().hasAll(['localId', 'adminUids', 'claimedByUid', 'name', 'site', 'loginId', 'passwordHash', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt']) &&
+                         incoming().keys().hasOnly([
+                           'localId', 'adminUids', 'claimedByUid', 'name', 'employeeCode', 'site', 'role',
+                           'phone', 'dailyWage', 'otHourlyRate', 'loginId', 'passwordHash',
+                           'passwordUpdatedAt', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         isValidEmployeeRecord(incoming());
+        allow update: if isSignedIn() &&
+                         isValidId(empDocId) &&
+                         isValidEmployeeRecord(incoming()) &&
+                         incoming().localId == existing().localId &&
+                         incoming().createdAtMs == existing().createdAtMs &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         (
+                           (isWorkspaceAdmin(workspaceId) &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'adminUids', 'claimedByUid', 'name', 'employeeCode', 'site', 'role',
+                               'phone', 'dailyWage', 'otHourlyRate', 'loginId', 'passwordHash',
+                               'passwordUpdatedAt', 'serverUpdatedAt'
+                             ])) ||
+                           // Action: Employee device claims its own employee record matching its verified memberLoginId
+                           (isWorkspaceMember(workspaceId) &&
+                             memberLoginId(workspaceId) == existing().loginId &&
+                             incoming().claimedByUid == request.auth.uid &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['claimedByUid', 'serverUpdatedAt']))
+                         );
+        allow delete: if isSignedIn() && isValidId(empDocId) && isWorkspaceAdmin(workspaceId);
+      }
+
+      // Attendance Records (Employee self-punch Check-In & Check-Out with selfie + location ONCE; Admin can add/edit/OT/delete all)
+      match /attendance/{entryDocId} {
+        allow get: if isSignedIn() && isValidId(entryDocId) && (
+          isWorkspaceAdmin(workspaceId) ||
+          (isWorkspaceMember(workspaceId) &&
+            (existing().employeeUid == request.auth.uid || existing().employeeLoginId == memberLoginId(workspaceId)))
+        );
+        allow list: if isSignedIn() && (
+          request.auth.uid in existing().adminUids ||
+          existing().employeeUid == request.auth.uid
+        );
+        allow create: if isSignedIn() &&
+                         isValidId(entryDocId) &&
+                         isWorkspaceMember(workspaceId) &&
+                         incoming().keys().hasAll([
+                           'adminUids', 'employeeUid', 'employeeId', 'employeeRemoteId', 'employeeLoginId',
+                           'date', 'inMinutes', 'outMinutes', 'status', 'hasCheckedIn', 'hasCheckedOut',
+                           'markedByRole', 'checkInTimestamp', 'checkOutTimestamp', 'updatedAtMs',
+                           'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'adminUids', 'employeeUid', 'employeeId', 'employeeRemoteId', 'employeeLoginId',
+                           'date', 'inMinutes', 'outMinutes', 'status', 'note', 'hasCheckedIn', 'hasCheckedOut',
+                           'markedByRole', 'checkInTimestamp', 'checkOutTimestamp',
+                           'checkInPhotoBase64', 'checkInLat', 'checkInLng', 'checkInAddress',
+                           'checkOutPhotoBase64', 'checkOutLat', 'checkOutLng', 'checkOutAddress',
+                           'updatedAtMs', 'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         isValidAttendanceRecord(incoming()) &&
+                         (
+                           isWorkspaceAdmin(workspaceId) ||
+                           // Employee self Check-In: must match own verified loginId, require selfie+location, status PRESENT, markedByRole EMPLOYEE
+                           (incoming().employeeUid == request.auth.uid &&
+                             incoming().employeeLoginId == memberLoginId(workspaceId) &&
+                             incoming().employeeLoginId.size() > 0 &&
+                             incoming().markedByRole == 'EMPLOYEE' &&
+                             incoming().status == 'PRESENT' &&
+                             incoming().hasCheckedIn == true &&
+                             incoming().hasCheckedOut == false &&
+                             hasSelfieAndLocationIn(incoming()))
+                         );
+        allow update: if isSignedIn() &&
+                         isValidId(entryDocId) &&
+                         isValidAttendanceRecord(incoming()) &&
+                         incoming().employeeId == existing().employeeId &&
+                         incoming().employeeRemoteId == existing().employeeRemoteId &&
+                         incoming().date == existing().date &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         (
+                           isWorkspaceAdmin(workspaceId) ||
+                           // Employee self Check-Out ONLY ONCE (cannot change IN or modify after OUT or alter Admin entries!)
+                           (isWorkspaceMember(workspaceId) &&
+                             existing().markedByRole == 'EMPLOYEE' &&
+                             existing().employeeUid == request.auth.uid &&
+                             existing().employeeLoginId == memberLoginId(workspaceId) &&
+                             existing().hasCheckedIn == true &&
+                             existing().hasCheckedOut == false &&
+                             incoming().hasCheckedOut == true &&
+                             incoming().hasCheckedIn == existing().hasCheckedIn &&
+                             incoming().inMinutes == existing().inMinutes &&
+                             incoming().checkInTimestamp == existing().checkInTimestamp &&
+                             incoming().status == 'PRESENT' &&
+                             hasSelfieAndLocationOut(incoming()) &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'outMinutes', 'checkOutTimestamp', 'hasCheckedOut', 'note',
+                               'checkOutPhotoBase64', 'checkOutLat', 'checkOutLng', 'checkOutAddress',
+                               'updatedAtMs', 'serverUpdatedAt'
+                             ]))
+                         );
+        allow delete: if isSignedIn() && isValidId(entryDocId) && isWorkspaceAdmin(workspaceId);
+      }
+
+      // Expense Claims (Employee can submit PENDING; Admin can approve/reject/mark claimed)
+      match /expenses/{expenseDocId} {
+        allow get: if isSignedIn() && isValidId(expenseDocId) && (
+          isWorkspaceAdmin(workspaceId) ||
+          (isWorkspaceMember(workspaceId) && existing().employeeUid == request.auth.uid)
+        );
+        allow list: if isSignedIn() && (
+          request.auth.uid in existing().adminUids ||
+          existing().employeeUid == request.auth.uid
+        );
+        allow create: if isSignedIn() &&
+                         isValidId(expenseDocId) &&
+                         isWorkspaceMember(workspaceId) &&
+                         incoming().keys().hasAll([
+                           'adminUids', 'employeeUid', 'localId', 'employeeName', 'site', 'title',
+                           'category', 'amount', 'date', 'status', 'isClaimed', 'approvedAt', 'claimedAt',
+                           'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'adminUids', 'employeeUid', 'localId', 'employeeId', 'employeeLoginId',
+                           'employeeName', 'site', 'title', 'category', 'amount', 'date', 'status',
+                           'isClaimed', 'approvedAt', 'claimedAt', 'note', 'createdAtMs',
+                           'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         isValidExpenseRecord(incoming()) &&
+                         (
+                           isWorkspaceAdmin(workspaceId) ||
+                           (incoming().employeeUid == request.auth.uid &&
+                             incoming().status == 'PENDING' &&
+                             incoming().isClaimed == false &&
+                             incoming().approvedAt == 0 &&
+                             incoming().claimedAt == 0)
+                         );
+        allow update: if isSignedIn() &&
+                         isValidId(expenseDocId) &&
+                         isValidExpenseRecord(incoming()) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().localId == existing().localId &&
+                         incoming().createdAtMs == existing().createdAtMs &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'adminUids', 'employeeUid', 'status', 'isClaimed', 'approvedAt', 'claimedAt', 'note', 'serverUpdatedAt'
+                         ]);
+        allow delete: if isSignedIn() && isValidId(expenseDocId) && isWorkspaceAdmin(workspaceId);
+      }
+
+      // Approval Requests (Leave & Timing Corrections)
+      match /approvals/{approvalDocId} {
+        allow get: if isSignedIn() && isValidId(approvalDocId) && (
+          isWorkspaceAdmin(workspaceId) ||
+          (isWorkspaceMember(workspaceId) && existing().employeeUid == request.auth.uid)
+        );
+        allow list: if isSignedIn() && (
+          request.auth.uid in existing().adminUids ||
+          existing().employeeUid == request.auth.uid
+        );
+        allow create: if isSignedIn() &&
+                         isValidId(approvalDocId) &&
+                         isWorkspaceMember(workspaceId) &&
+                         incoming().keys().hasAll([
+                           'adminUids', 'employeeUid', 'localId', 'employeeId', 'employeeLoginId',
+                           'employeeName', 'type', 'date', 'inMinutes', 'outMinutes', 'reason',
+                           'status', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'adminUids', 'employeeUid', 'localId', 'employeeId', 'employeeLoginId',
+                           'employeeName', 'type', 'date', 'inMinutes', 'outMinutes', 'reason',
+                           'status', 'createdAtMs', 'serverCreatedAt', 'serverUpdatedAt'
+                         ]) &&
+                         isValidApprovalRequest(incoming()) &&
+                         (
+                           isWorkspaceAdmin(workspaceId) ||
+                           (incoming().employeeUid == request.auth.uid && incoming().status == 'PENDING')
+                         );
+        allow update: if isSignedIn() &&
+                         isValidId(approvalDocId) &&
+                         isValidApprovalRequest(incoming()) &&
+                         isWorkspaceAdmin(workspaceId) &&
+                         incoming().localId == existing().localId &&
+                         incoming().createdAtMs == existing().createdAtMs &&
+                         incoming().serverCreatedAt == existing().serverCreatedAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['adminUids', 'employeeUid', 'status', 'serverUpdatedAt']);
+        allow delete: if isSignedIn() && isValidId(approvalDocId) && isWorkspaceAdmin(workspaceId);
+      }
+    }
+  }
+}

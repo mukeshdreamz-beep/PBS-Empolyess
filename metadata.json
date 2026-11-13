@@ -1,0 +1,6 @@
+{
+  "name": "PBS Attendance",
+  "description": "Local employee attendance tracker with automatic 8h 45m full-day calculation and post-7:00 PM overtime tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

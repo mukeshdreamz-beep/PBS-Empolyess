@@ -1,0 +1,309 @@
+<resources>
+    <string name="app_name">PBS Attendance</string>
+    <string name="brand_title">PBS Employees</string>
+    <string name="app_subtitle">Attendance &amp; Workforce Management</string>
+
+    <!-- Persona Switcher -->
+    <string name="persona_admin">Admin App</string>
+    <string name="persona_employee">Employee App</string>
+    <string name="offline_badge">Offline</string>
+
+    <!-- 8 Admin Sections -->
+    <string name="section_dashboard">Dashboard</string>
+    <string name="section_attendance">Attendance</string>
+    <string name="section_employees">Employees</string>
+    <string name="section_expenses">Expenses</string>
+    <string name="section_salary">Salary</string>
+    <string name="section_approvals">Approvals</string>
+    <string name="section_reports">Reports</string>
+    <string name="section_settings">Settings</string>
+
+    <!-- Admin Dashboard -->
+    <string name="admin_dashboard_title">Admin Dashboard</string>
+    <string name="all_sites_label">All Sites</string>
+    <string name="kpi_total_employees">Total Employees</string>
+    <string name="kpi_present_today">Present Today</string>
+    <string name="kpi_absent_today">Absent Today</string>
+    <string name="kpi_pending">Pending</string>
+    <string name="site_manpower_title">Site-wise manpower</string>
+    <string name="explore_sections_title">Explore app sections</string>
+    <string name="load_demo_data_button">Load Sample Workforce</string>
+    <string name="empty_manpower_hint">Add employees with sites or load sample workforce data to view site manpower.</string>
+
+    <!-- Entry & Roll Call -->
+    <string name="mode_single_entry">Single Entry</string>
+    <string name="mode_roll_call">Roll Call</string>
+    <string name="section_employee">Employee</string>
+    <string name="select_employee_prompt">Select employee</string>
+    <string name="no_employees_yet">No employees added yet</string>
+    <string name="add_employee_button">Add Employee</string>
+    <string name="date_label">Date (DD/MM/YYYY)</string>
+    <string name="pick_date_cd">Pick date from calendar</string>
+    <string name="today_chip">Today</string>
+    <string name="yesterday_chip">Yesterday</string>
+    <string name="status_present">Present</string>
+    <string name="status_absent">Absent</string>
+    <string name="status_leave">On Leave</string>
+    <string name="time_in_label">TIME IN</string>
+    <string name="time_out_label">TIME OUT</string>
+    <string name="punch_now_button">Now</string>
+    <string name="reset_standard_shift">Standard Shift</string>
+    <string name="notes_label">Remarks / Note (optional)</string>
+    <string name="notes_placeholder">e.g. Site visit, client meeting, approved OT</string>
+    <string name="calculation_title">Attendance Calculation</string>
+    <string name="working_time_label">Working Time</string>
+    <string name="overtime_label">Overtime</string>
+    <string name="status_full_day">FULL DAY</string>
+    <string name="status_less_than_full">LESS THAN FULL DAY</string>
+    <string name="status_absent_badge">ABSENT</string>
+    <string name="status_leave_badge">ON LEAVE</string>
+    <string name="ot_rule_note">OT starts after %1$s. Full day requires %2$s.</string>
+    <string name="ot_gap_note">Time between standard shift end and OT start is not counted as OT.</string>
+    <string name="rules_footer">Rules: Full day = %1$s or more. Overtime is counted only after %2$s. Break deduction = %3$d min. Saving a second entry for the same employee and date replaces the previous one.</string>
+    <string name="replacing_existing_notice">An entry already exists for this employee and date. Saving will replace it.</string>
+    <string name="save_attendance_button">Save Attendance</string>
+    <string name="update_attendance_button">Update Attendance</string>
+    <string name="recent_entries_title">Recent Entries</string>
+    <string name="roll_call_subtitle">Mark daily attendance for every employee on %1$s</string>
+    <string name="roll_call_full_shift">Full Shift</string>
+    <string name="roll_call_clock_in_now">Punch In</string>
+    <string name="roll_call_mark_absent">Absent</string>
+    <string name="roll_call_mark_leave">Leave</string>
+    <string name="roll_call_mark_all_full">Mark All Full Day</string>
+    <string name="roll_call_empty">Add employees in the Employees section to use daily roll call.</string>
+
+    <!-- Validation & Feedback -->
+    <string name="error_select_employee">Please add and select an employee first.</string>
+    <string name="error_invalid_date">Please enter a valid date in DD/MM/YYYY format.</string>
+    <string name="error_same_in_out">IN and OUT time cannot be the same.</string>
+    <string name="msg_attendance_saved">Attendance saved locally.</string>
+    <string name="msg_attendance_replaced">Existing entry updated.</string>
+    <string name="msg_roll_call_updated">Roll call updated.</string>
+    <string name="msg_record_deleted">Record deleted</string>
+    <string name="action_undo">Undo</string>
+    <string name="msg_employee_added">Employee added.</string>
+    <string name="msg_employee_updated">Employee updated.</string>
+    <string name="msg_employee_deleted">Employee removed.</string>
+    <string name="msg_policy_saved">Settings &amp; shift rules updated.</string>
+    <string name="msg_export_failed">Could not export CSV report.</string>
+    <string name="msg_expense_added">Expense recorded.</string>
+    <string name="msg_request_submitted">Request submitted for approval.</string>
+    <string name="msg_approval_updated">Approval status updated.</string>
+    <string name="msg_demo_loaded">Sample workforce &amp; site data loaded.</string>
+
+    <!-- Reports / Records -->
+    <string name="all_employees_filter">All Employees</string>
+    <string name="all_months_chip">All Months</string>
+    <string name="search_records_placeholder">Search name, code, site, date, or note…</string>
+    <string name="summary_entries">Entries</string>
+    <string name="summary_full_days">Full Days</string>
+    <string name="summary_absent_leave">Absent/Leave</string>
+    <string name="summary_total_worked">Worked</string>
+    <string name="summary_total_ot">Total OT</string>
+    <string name="export_csv_button">Export CSV</string>
+    <string name="share_summary_button">Share</string>
+    <string name="empty_records_title">No attendance records yet</string>
+    <string name="empty_records_subtitle">Log a daily shift in Attendance to calculate working hours and overtime automatically.</string>
+    <string name="empty_filtered_title">No matching records</string>
+    <string name="empty_filtered_subtitle">Try clearing the month, employee filter, or search query.</string>
+    <string name="edit_record_action">Edit</string>
+    <string name="delete_record_action">Delete</string>
+    <string name="monthly_report_title">Monthly Reports &amp; Records</string>
+    <string name="monthly_report_subtitle">Per-employee summary, records log &amp; CSV export</string>
+    <string name="prev_month_cd">Previous month</string>
+    <string name="next_month_cd">Next month</string>
+    <string name="no_monthly_data_title">No entries for this period</string>
+    <string name="no_monthly_data_subtitle">Switch months or log employee attendance to view monthly totals.</string>
+
+    <!-- Employees -->
+    <string name="team_title">Employees &amp; Sites</string>
+    <string name="team_subtitle">Stored locally on device • No internet required</string>
+    <string name="empty_team_title">Add your first employee</string>
+    <string name="empty_team_subtitle">Assign site, role, and optional daily/OT rates to track attendance and salary.</string>
+    <string name="delete_employee_confirm_title">Remove employee?</string>
+    <string name="delete_employee_confirm_body">Removing %1$s will also delete %2$d saved attendance record(s) for this employee.</string>
+    <string name="remove_action">Remove</string>
+
+    <!-- Expenses -->
+    <string name="expenses_title">Expense Claims &amp; History</string>
+    <string name="add_expense_button">Submit Expense</string>
+    <string name="expense_title_label">Expense title *</string>
+    <string name="expense_amount_label">Amount (₹) *</string>
+    <string name="expense_category_label">Category</string>
+    <string name="empty_expenses_title">No expenses logged yet</string>
+    <string name="empty_expenses_subtitle">Employees can submit expense claims here. Only Admin can approve and mark claims settled.</string>
+    <string name="empty_filtered_expenses">No expenses match the selected date or status filter.</string>
+    <string name="total_expense_kpi">Total Expense</string>
+    <string name="approved_expense_kpi">Approved</string>
+    <string name="claimed_expense_kpi">Claimed</string>
+    <string name="pending_expense_kpi">Pending</string>
+    <string name="unclaimed_balance_label">Unclaimed: ₹%1$s</string>
+    <string name="mark_claimed_action">Mark Claimed</string>
+    <string name="claimed_badge">CLAIMED</string>
+    <string name="unclaimed_badge">UNCLAIMED</string>
+    <string name="download_date_wise_csv">Date-wise CSV</string>
+    <string name="download_report_wise_csv">Report-wise CSV</string>
+    <string name="msg_expense_downloaded">Expense CSV saved to device.</string>
+    <string name="msg_claim_updated">Expense claim status updated.</string>
+    <string name="filter_all_dates">All Dates</string>
+    <string name="filter_today">Today</string>
+    <string name="filter_this_month">This Month</string>
+    <string name="filter_date_range">Date Range</string>
+    <string name="expense_from_date">From: %1$s</string>
+    <string name="expense_to_date">To: %1$s</string>
+    <string name="search_expenses_placeholder">Search title, employee, site, or category…</string>
+    <string name="expense_submitted_only_note">Submitted claims stay Pending until Admin approves &amp; settles.</string>
+
+    <!-- Salary -->
+    <string name="salary_title">Monthly Salary &amp; Payroll</string>
+    <string name="salary_subtitle">Calculated from Full Days, Half/Short Days, OT &amp; Approved Expenses</string>
+    <string name="export_payroll_csv">Payroll CSV</string>
+
+    <!-- Approvals -->
+    <string name="approvals_title">Pending Approvals</string>
+    <string name="approvals_subtitle">Review leave, overtime, attendance corrections &amp; expenses</string>
+    <string name="approve_action">Approve</string>
+    <string name="reject_action">Reject</string>
+    <string name="empty_approvals_title">All caught up</string>
+    <string name="empty_approvals_subtitle">No pending leave, attendance correction, or expense approvals.</string>
+
+    <!-- Employee App Mode -->
+    <string name="employee_app_welcome">Employee Self-Service</string>
+    <string name="employee_punch_card_title">Today\'s Shift</string>
+    <string name="punch_in_today">Check In Now</string>
+    <string name="punch_out_today">Check Out Now</string>
+    <string name="request_leave_button">Request Leave</string>
+    <string name="request_correction_button">Fix Timing</string>
+    <string name="submit_expense_button">Submit Expense</string>
+    <string name="my_history_title">My Attendance History</string>
+    <string name="tab_my_shift">My Shift</string>
+    <string name="tab_my_expenses">My Expenses</string>
+
+    <!-- Settings -->
+    <string name="policy_settings_title">Shift &amp; Overtime Rules</string>
+    <string name="policy_settings_cd">Shift and overtime settings</string>
+    <string name="policy_default_in">Default Time In</string>
+    <string name="policy_default_out">Default Time Out</string>
+    <string name="policy_ot_start">Overtime Starts At</string>
+    <string name="policy_full_day_hours">Full Day Threshold</string>
+    <string name="policy_break_minutes">Unpaid Break Deduction (mins)</string>
+    <string name="policy_reset_defaults">Reset PBS Defaults</string>
+    <string name="theme_mode_label">Appearance</string>
+    <string name="save_action">Save</string>
+
+    <!-- Dialogs -->
+    <string name="add_employee_dialog_title">Add Employee</string>
+    <string name="edit_employee_dialog_title">Edit Employee</string>
+    <string name="employee_name_label">Employee name *</string>
+    <string name="employee_code_label">Employee ID / Code (optional)</string>
+    <string name="employee_site_label">Assigned Site</string>
+    <string name="employee_role_label">Role / Department (optional)</string>
+    <string name="employee_phone_label">Phone number (optional)</string>
+    <string name="employee_daily_wage_label">Daily Wage ₹ (optional)</string>
+    <string name="employee_ot_rate_label">OT Hourly Rate ₹ (optional)</string>
+    <string name="add_action">Add</string>
+    <string name="cancel_action">Cancel</string>
+    <string name="confirm_action">OK</string>
+    <string name="select_time_in_title">Select Time In</string>
+    <string name="select_time_out_title">Select Time Out</string>
+    <string name="select_date_title">Select Attendance Date</string>
+
+    <!-- Authentication & Credentials -->
+    <string name="auth_admin_tab">Admin</string>
+    <string name="auth_employee_tab">Employee</string>
+    <string name="auth_login_mode">Login</string>
+    <string name="auth_signup_mode">Sign Up</string>
+    <string name="auth_admin_name_label">Admin Name *</string>
+    <string name="auth_mobile_label">Mobile Number *</string>
+    <string name="auth_login_id_label">Employee Login ID *</string>
+    <string name="auth_password_label">Password *</string>
+    <string name="auth_confirm_password_label">Confirm Password *</string>
+    <string name="auth_sign_in_button">Login</string>
+    <string name="auth_create_account_button">Create Admin Account</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
+    <string name="auth_admin_hint">Sign in with your registered 10-digit mobile number and password.</string>
+    <string name="auth_employee_hint">Use the Login ID and Password generated by Admin.</string>
+    <string name="auth_logout_cd">Logout</string>
+    <string name="auth_logout_label">Logout</string>
+    <string name="auth_error_invalid_credentials">Invalid login ID/mobile or password.</string>
+    <string name="auth_error_mobile_exists">This mobile number is already registered.</string>
+    <string name="auth_error_invalid_mobile">Enter a valid 10-digit mobile number.</string>
+    <string name="auth_error_weak_password">Password must be at least 6 characters.</string>
+    <string name="auth_error_name_required">Please enter your name.</string>
+    <string name="auth_error_login_id_exists">Login ID already exists.</string>
+    <string name="auth_error_no_password_set">No password set. Ask Admin to reset your password.</string>
+    <string name="auth_error_password_mismatch">Passwords do not match.</string>
+    <string name="msg_login_success">Logged in successfully.</string>
+    <string name="msg_signup_success">Admin account created.</string>
+    <string name="msg_password_reset">Employee password reset.</string>
+    <string name="employee_login_id_label">Login ID (auto-generated)</string>
+    <string name="employee_password_label">Login Password (auto-generated)</string>
+    <string name="regenerate_password_cd">Generate new password</string>
+    <string name="reset_password_action">Reset Password</string>
+    <string name="reset_password_dialog_title">Reset Employee Password</string>
+    <string name="new_password_label">New Password *</string>
+    <string name="credentials_created_title">Employee Login Credentials</string>
+    <string name="credentials_reset_title">Password Reset Complete</string>
+    <string name="copy_credentials_button">Copy</string>
+    <string name="credentials_copied_msg">Login credentials copied.</string>
+
+    <!-- Cloud Sync & Google Sign-In -->
+    <string name="cloud_sync_online_badge">Online · %1$s</string>
+    <string name="cloud_sync_syncing_badge">Syncing…</string>
+    <string name="cloud_sync_error_badge">Sync Warning</string>
+    <string name="workspace_code_label">Company Sync Code</string>
+    <string name="workspace_code_hint">Use the same Sync Code (e.g. PBS-MAIN) on Admin and Employee phones.</string>
+    <string name="google_signin_title">Online Sync (Mobile Data &amp; Wi-Fi)</string>
+    <string name="google_signin_subtitle">Sign in with Google to securely sync attendance, selfie proof, GPS locations, and expenses across Admin and Employee phones.</string>
+    <string name="google_signin_button">Sign in with Google</string>
+    <string name="google_signin_checking">Checking Google session…</string>
+    <string name="google_signin_footer">Encrypted Firebase Cloud Sync • Works on Mobile Data &amp; Wi-Fi</string>
+    <string name="google_account_connected">Cloud Account: %1$s</string>
+    <string name="google_signout_button">Switch Google Account</string>
+    <string name="cloud_sync_card_title">Cloud Sync &amp; Workspace</string>
+    <string name="co_admin_emails_label">Authorized Co-Admin Google Emails</string>
+    <string name="co_admin_emails_hint">Comma-separated Google emails allowed to access this workspace as Admin on other phones.</string>
+    <string name="msg_workspace_settings_saved">Cloud workspace &amp; co-admin settings saved.</string>
+    <string name="error_cloud_sync_failed">Cloud sync error. Check mobile data/Wi-Fi or permissions.</string>
+    <string name="error_co_admin_unauthorized">This Google account is not authorized for Admin on this workspace.</string>
+
+    <!-- Mandatory Selfie + GPS Attendance & Proof -->
+    <string name="selfie_checkin_title">Selfie Check-In</string>
+    <string name="selfie_checkout_title">Selfie Check-Out</string>
+    <string name="selfie_gps_required_note">Live selfie &amp; GPS required</string>
+    <string name="location_fetch_failed">Could not fetch GPS location. Ensure GPS/Location is turned on.</string>
+    <string name="camera_location_permission_title">Camera &amp; Location Required</string>
+    <string name="camera_location_permission_body">PBS Employees requires Camera (live selfie) and GPS Location access to verify attendance check-in and check-out.</string>
+    <string name="grant_permissions_button">Grant Camera &amp; Location</string>
+    <string name="captured_selfie_cd">Captured attendance selfie</string>
+    <string name="selfie_ready_badge">Selfie Captured</string>
+    <string name="capture_selfie_button">Capture Selfie</string>
+    <string name="retake_selfie_button">Retake Selfie</string>
+    <string name="gps_location_label">GPS Location</string>
+    <string name="detecting_gps_location">Detecting live GPS location…</string>
+    <string name="tap_refresh_gps">Tap refresh to capture GPS location</string>
+    <string name="refresh_gps_cd">Refresh GPS location</string>
+    <string name="confirm_checkin_button">Confirm Check-In</string>
+    <string name="confirm_checkout_button">Confirm Check-Out</string>
+
+    <string name="proof_dialog_title">Selfie &amp; Location Proof</string>
+    <string name="proof_marked_by_admin">Marked by Admin</string>
+    <string name="proof_not_captured_yet">No photo captured</string>
+    <string name="proof_checkout_pending">Employee has not checked out yet</string>
+    <string name="open_in_maps_button">Open Maps</string>
+    <string name="view_proof_button">Photo &amp; Location</string>
+
+    <string name="shift_in_progress">CHECKED IN</string>
+    <string name="out_pending_label">Pending</string>
+    <string name="checked_in_done">Checked In</string>
+    <string name="checked_out_done">Checked Out</string>
+    <string name="employee_lock_notice">Selfie + GPS verified. Only Admin can edit or delete attendance.</string>
+
+    <string name="error_already_checked_in">You have already checked in today.</string>
+    <string name="error_not_checked_in_yet">Please check in with a selfie first before checking out.</string>
+    <string name="error_already_checked_out">You have already checked out today.</string>
+    <string name="error_locked_by_admin">Today\'s attendance was marked by Admin and cannot be changed.</string>
+    <string name="msg_selfie_checkin_saved">Selfie check-in &amp; location saved and synced.</string>
+    <string name="msg_selfie_checkout_saved">Selfie check-out &amp; location saved and synced.</string>
+</resources>
